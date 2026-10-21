@@ -76,8 +76,8 @@ Focus-StyleGAN is a dual-branch industrial defect augmentation system for MVTec 
 - **WGAN-GP 训练器**：梯度惩罚、n_critic 更新节奏、AMP、在线 FID、最佳模型保存和 Optuna 接口。
 - **四类增广管线**：GAN 伪异常、真实缺陷迁移、检索式增广、缺陷堆叠增广。
 - **多维评估代码**：FID、IS、LPIPS、PSNR、SSIM、PPS、Pixel-AUC、Region-AUC、PRO-AUC 和消融框架。
-- **交互演示**：Flask 页面与 REST API 支持图片上传、生成、对比和下载。
-- **可复现配置**：数据、模型、训练、评估和增广参数集中在 `core/integrated_config.yaml`。
+- **交互演示**：Flask 页面与 REST API 支持图片上传、生成与结果对比。
+- **可复现配置**：主要参数集中在 `core/integrated_config.yaml`；部分增广概率与结构参数仍在代码中定义。
 
 ## 项目内容导航
 
@@ -100,7 +100,7 @@ Focus-StyleGAN is a dual-branch industrial defect augmentation system for MVTec 
 | 四类增广管线 | 已实现 | `core/integrated_augmentor.py` 与相关核心模块 |
 | 评估指标与消融框架 | 已实现 | `model/evaluation/` |
 | Flask Web 演示 | 已实现 | `web/app.py`、`web/web_api.py` |
-| GitHub Actions | 已配置 | 当前执行语法与关键静态检查，不运行 GAN 训练 |
+| GitHub Actions | 已配置 | 执行 Ruff 关键规则、compileall 和 pytest（CPU），不运行 GAN 训练 |
 | MVTec AD 数据集 | 未包含 | 需要按官方说明下载到 `datasets/mvtec_anomaly_detection/` |
 | 训练权重与 checkpoint | 未包含 | 需要自行训练或放置兼容权重 |
 | 完整训练与调参 | 待运行 | 需要 GPU、数据集和足够的训练时间 |
@@ -200,7 +200,8 @@ GAN 模式需要匹配当前模型结构的 checkpoint；真实缺陷迁移、�
 ### 6. Web 演示
 
 ```bash
-pip install -r web/requirements-web.txt
+# Web 还依赖 PyTorch（训练/推理栈），请先按你的环境安装 CPU 或 GPU 版 torch
+pip install -r web/requirements-web.txt   # Flask / Pillow / numpy / opencv
 python web/app.py
 ```
 
@@ -225,7 +226,7 @@ docs/                       案例、模型设计、评估协议和面试指南
 - MVTec AD 是公开数据集，但完整跨类别训练成本较高，当前配置面向单机 GPU；显存和环境差异会影响结果。
 - IS 基于 ImageNet 分类模型，对工业缺陷局部异常的解释力有限，不能单独作为质量结论。
 - PPS 是本项目自定义的物理合理性指标，尚未完成与人工专家判断或下游任务增益的系统验证。
-- 当前 CI 只做语法和关键静态检查，不替代模型训练测试、GPU 显存测试和端到端实验。
+- 当前 CI 执行 Ruff 关键规则、compileall 和 CPU pytest，不替代模型训练测试、GPU 显存测试和端到端实验。
 - 旧 checkpoint 与当前模型结构可能不兼容，加载时应根据权重警告重新训练。
 
 ## License

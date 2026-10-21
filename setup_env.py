@@ -27,9 +27,9 @@ DEPENDENCIES = {
 }
 
 # 有版本上限的依赖：pip 包名 -> (最低版本, 最高版本-不含)
-DEPENDENCY_CAPS = {
-    "numpy": ("1.24.0", "2.0.0"),
-}
+# NumPy 1.x/2.x 均可（np.trapezoid 兼容层已在 evaluator 中处理），
+# CI 同时覆盖两条分支。
+DEPENDENCY_CAPS: dict[str, tuple[str, str]] = {}
 
 TORCH_PACKAGES = ["torch", "torchvision", "torchaudio"]
 

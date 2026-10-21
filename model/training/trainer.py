@@ -92,9 +92,9 @@ class PerceptualLoss(nn.Module):
         Returns:
             感知损失值
         """
-        # 归一化
-        x = (x - self.mean) / self.std
-        y = (y - self.mean) / self.std
+        # 输入张量在 [-1, 1] 域，先映射到 [0, 1] 再做 ImageNet 归一化
+        x = ((x + 1) / 2 - self.mean) / self.std
+        y = ((y + 1) / 2 - self.mean) / self.std
 
         loss = x.new_zeros(())
         for layer, name in zip(self.layers, self.layer_name_list):
@@ -751,6 +751,19 @@ class OptunaOptimizer:
         self.logger.info("最佳超参数:")
         for key, value in self.study.best_params.items():
             self.logger.info(f"  {key}: {value}")
+
+        # 将 best_params 写回配置后再保存（objective 会按 trial 修改 self.config，
+        # 直接保存得到的是最后一次试验，而不是最佳试验）。
+        param_to_config = {
+            "g_lr": "model.generator.lr",
+            "d_lr": "model.discriminator.lr",
+            "lambda_gp": "training.lambda_gp",
+            "lambda_perceptual": "training.lambda_perceptual",
+            "lambda_reconstruction": "training.lambda_reconstruction",
+        }
+        for param, key in param_to_config.items():
+            if param in self.study.best_params:
+                self.config.update(key, self.study.best_params[param])
 
         # 保存最佳配置
         best_config_path = self.config.config_path.parent / "best_config.yaml"

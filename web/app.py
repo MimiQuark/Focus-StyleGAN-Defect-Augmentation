@@ -5,6 +5,9 @@
 """
 
 import os
+# 必须在导入 cv2/torch 之前设置，否则 OpenMP 运行时冲突无法规避。
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+
 import sys
 import json
 import base64
@@ -21,9 +24,6 @@ from flask import Flask, request, jsonify, send_from_directory
 from PIL import Image, ImageDraw, ImageEnhance
 import numpy as np
 import cv2
-
-# Windows + Anaconda 下可能出现 OpenMP 运行时冲突，导致导入 torch/cv2 直接崩溃。
-os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 
 # 确保能从项目根目录导入模块（无论从哪个目录启动）
 _parent_dir = Path(__file__).resolve().parent.parent
@@ -209,10 +209,12 @@ def _build_dynamic_analysis(input_img: Image.Image, output_img: Image.Image, mod
         'defect_scores': classification.get('scores', {}),
         'defect_confidence': round(float(defect_conf), 1),
         'generation_quality': quality,
-        'fid_score': round(float(fid_proxy), 2),
-        'is_score': round(float(is_proxy), 2),
-        'lpips_score': round(float(lpips_proxy), 3),
-        'psnr_score': round(float(psnr_proxy), 2)
+        # 以下是根据像素统计量估计的代理指标，不是真实 FID/IS/LPIPS/PSNR，
+        # 因此使用 *_proxy 命名，避免被当成正式评估数值。
+        'fid_proxy': round(float(fid_proxy), 2),
+        'is_proxy': round(float(is_proxy), 2),
+        'lpips_proxy': round(float(lpips_proxy), 3),
+        'psnr_proxy': round(float(psnr_proxy), 2)
     }
 
 @app.route('/')
@@ -972,12 +974,9 @@ def get_model_info():
                     'discriminator': '多尺度PatchGAN with CBAM注意力',
                     'loss_functions': ['WGAN-GP', '感知损失', '重构损失', 'LPIPS损失']
                 },
-                'performance': {
-                    'fid': 18.7,
-                    'is': 3.2,
-                    'lpips': 0.32,
-                    'psnr': 28.5
-                },
+                'performance': None,
+                'performance_note': '未在运行时计算正式 FID/IS/LPIPS/PSNR；'
+                                    '结果页展示的是基于像素统计的代理指标。',
                 'augmentor_info': info
             })
         except Exception as e:
@@ -993,12 +992,9 @@ def get_model_info():
             'discriminator': '多尺度PatchGAN with CBAM注意力',
             'loss_functions': ['WGAN-GP', '感知损失', '重构损失', 'LPIPS损失']
         },
-        'performance': {
-            'fid': 18.7,
-            'is': 3.2,
-            'lpips': 0.32,
-            'psnr': 28.5
-        }
+        'performance': None,
+        'performance_note': '未在运行时计算正式 FID/IS/LPIPS/PSNR；'
+                            '结果页展示的是基于像素统计的代理指标。'
     }
     return jsonify(info)
 

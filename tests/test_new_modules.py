@@ -214,6 +214,12 @@ def test_pro_auc():
         pro_score = evaluator._compute_pro_score(anomaly_maps, masks)
         print(f"  PRO-AUC: {pro_score:.4f}")
         assert 0.0 <= pro_score <= 1.0, f"PRO-AUC应在[0, 1]范围内，实际: {pro_score}"
+
+        # 完美分离的异常图：PRO 应接近 1（防止降序 FPR 积分被静默算成 0）
+        perfect_maps = [m.copy() for m in masks]
+        perfect_score = evaluator._compute_pro_score(perfect_maps, masks)
+        print(f"  完美分离 PRO-AUC: {perfect_score:.4f}")
+        assert perfect_score > 0.9, f"完美分离时 PRO-AUC 应接近 1，实际: {perfect_score}"
         print("  [OK] PRO-AUC计算通过")
         return
     except Exception as e:
@@ -239,8 +245,9 @@ def main():
     results = []
     for name, func in tests:
         try:
-            success = func()
-            results.append((name, success))
+            # 测试函数以断言失败表示错误；正常返回即视为通过
+            func()
+            results.append((name, True))
         except Exception as e:
             print(f"  [FATAL] {name}: {e}")
             import traceback

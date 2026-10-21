@@ -316,7 +316,9 @@ class DefectFocusedBranch(nn.Module):
         latent_dim: int = 512,
         style_dim: int = 512,
         n_mlp: int = 8,
-        channel_multiplier: int = 2
+        channel_multiplier: int = 2,
+        use_adain: bool = True,
+        use_cbam: bool = True,
     ):
         """
         Args:
@@ -324,6 +326,8 @@ class DefectFocusedBranch(nn.Module):
             style_dim: 风格向量维度
             n_mlp: MLP层数
             channel_multiplier: 通道乘数
+            use_adain: 是否使用 AdaIN（消融开关）
+            use_cbam: 是否使用 CBAM（消融开关）
         """
         super().__init__()
         self.latent_dim = latent_dim
@@ -344,7 +348,7 @@ class DefectFocusedBranch(nn.Module):
             out_ch = channels[i + 1]
             block = GeneratorBlock(
                 in_ch, out_ch, style_dim,
-                use_adain=True, use_cbam=True
+                use_adain=use_adain, use_cbam=use_cbam
             )
             self.blocks.append(block)
 
@@ -388,7 +392,9 @@ class BackgroundPreservingBranch(nn.Module):
         latent_dim: int = 512,
         style_dim: int = 512,
         n_mlp: int = 8,
-        channel_multiplier: int = 2
+        channel_multiplier: int = 2,
+        use_adain: bool = True,
+        use_cbam: bool = True,
     ):
         """
         Args:
@@ -396,6 +402,8 @@ class BackgroundPreservingBranch(nn.Module):
             style_dim: 风格向量维度
             n_mlp: MLP层数
             channel_multiplier: 通道乘数
+            use_adain: 是否使用 AdaIN（消融开关）
+            use_cbam: 是否使用 CBAM（消融开关）
         """
         super().__init__()
         self.latent_dim = latent_dim
@@ -426,7 +434,7 @@ class BackgroundPreservingBranch(nn.Module):
             out_ch = channels[i + 1]
             block = GeneratorBlock(
                 in_ch, out_ch, style_dim,
-                use_adain=True, use_cbam=True
+                use_adain=use_adain, use_cbam=use_cbam
             )
             self.decoder_blocks.append(block)
 
@@ -637,13 +645,19 @@ class FocusStyleGAN(nn.Module):
         """
         super().__init__()
         self.config = config
+        # 记录训练分辨率；调用方若只传 config.model，则回退到 256（项目默认值）。
+        self.image_size = int(config.get('data.image_size', 256))
+        use_adain = bool(config.get('adain.use', True))
+        use_cbam = bool(config.get('attention.use_cbam', True))
 
         # 缺陷聚焦分支
         self.defect_branch = DefectFocusedBranch(
             latent_dim=config.get('generator.latent_dim', 512),
             style_dim=config.get('generator.style_dim', 512),
             n_mlp=config.get('generator.n_mlp', 8),
-            channel_multiplier=config.get('generator.channel_multiplier', 2)
+            channel_multiplier=config.get('generator.channel_multiplier', 2),
+            use_adain=use_adain,
+            use_cbam=use_cbam,
         )
 
         # 背景保持分支
@@ -651,7 +665,9 @@ class FocusStyleGAN(nn.Module):
             latent_dim=config.get('generator.latent_dim', 512),
             style_dim=config.get('generator.style_dim', 512),
             n_mlp=config.get('generator.n_mlp', 8),
-            channel_multiplier=config.get('generator.channel_multiplier', 2)
+            channel_multiplier=config.get('generator.channel_multiplier', 2),
+            use_adain=use_adain,
+            use_cbam=use_cbam,
         )
 
         # 融合模块
@@ -661,7 +677,7 @@ class FocusStyleGAN(nn.Module):
         self.discriminator = MultiScaleDiscriminator(
             n_layers=config.get('discriminator.n_layers', 5),
             channel_multiplier=config.get('discriminator.channel_multiplier', 2),
-            use_cbam=config.get('attention.use_cbam', True),
+            use_cbam=use_cbam,
             n_scales=config.get('discriminator.n_scales', 3)
         )
 
@@ -730,7 +746,7 @@ class FocusStyleGAN(nn.Module):
         # 背景输入：优先使用真实背景图像
         if background_images is None:
             batch_size = z_defect.shape[0]
-            image_size = self.config.get('data.image_size', 256) if hasattr(self.config, 'get') else 256
+            image_size = self.image_size
             background_images = torch.randn(batch_size, 3, image_size, image_size).to(z_defect.device)
 
         # 生成背景图像

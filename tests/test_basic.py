@@ -92,6 +92,8 @@ def test_dataset():
         item = dataset[0]
         print(f"  图像形状: {item['image'].shape}")
         print(f"  标签: {item['label']}")
+        assert item["image"].shape == (3, 256, 256), item["image"].shape
+        assert item["image"].dtype == torch.float32
 
         # 清理测试数据
         import shutil
@@ -117,6 +119,8 @@ def test_training_components():
         img2 = torch.randn(1, 3, 256, 256)
         loss = perceptual_loss(img1, img2)
 
+        assert torch.isfinite(loss), f"感知损失非有限值: {loss}"
+        assert loss.item() >= 0, f"感知损失应非负: {loss.item()}"
         print(f"✓ 训练组件测试成功")
         print(f"  感知损失值: {loss.item():.4f}")
         return
@@ -183,8 +187,9 @@ def main():
     for test_name, test_func in tests:
         print(f"\n[{test_name}]")
         try:
-            success = test_func()
-            results.append((test_name, success))
+            # 测试函数以断言失败表示错误；正常返回即视为通过
+            test_func()
+            results.append((test_name, True))
         except Exception as e:
             print(f"✗ 测试异常: {e}")
             results.append((test_name, False))

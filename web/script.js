@@ -325,10 +325,10 @@ document.addEventListener('DOMContentLoaded', function() {
             { label: '异常显著度', value: `${analysis.anomaly_salience || 0}%` },
             { label: '缺陷位置', value: analysis.defect_location || '—' },
             { label: '生成质量', value: analysis.generation_quality || '—' },
-            { label: 'FID', value: analysis.fid_score != null ? analysis.fid_score : '—' },
-            { label: 'IS', value: analysis.is_score != null ? analysis.is_score : '—' },
-            { label: 'LPIPS', value: analysis.lpips_score != null ? analysis.lpips_score : '—' },
-            { label: 'PSNR', value: analysis.psnr_score != null ? analysis.psnr_score : '—' },
+            { label: 'FID（代理）', value: analysis.fid_proxy != null ? analysis.fid_proxy : '—' },
+            { label: 'IS（代理）', value: analysis.is_proxy != null ? analysis.is_proxy : '—' },
+            { label: 'LPIPS（代理）', value: analysis.lpips_proxy != null ? analysis.lpips_proxy : '—' },
+            { label: 'PSNR（代理）', value: analysis.psnr_proxy != null ? analysis.psnr_proxy : '—' },
         ];
 
         if (augEvalGrid) {
@@ -368,11 +368,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 anomaly_salience: Math.round(78 + Math.random() * 18),
                 defect_location: '右上区域',
                 defect_type: '划痕',
-                generation_quality: '高',
-                fid_score: rnd(16, 22),
-                is_score: rnd(2.8, 3.6),
-                lpips_score: rnd(0.26, 0.38),
-                psnr_score: rnd(26, 31)
+                generation_quality: '高（模拟）',
+                // 浏览器本地模拟值，仅用于演示界面，不是模型评估结果
+                fid_proxy: rnd(16, 22),
+                is_proxy: rnd(2.8, 3.6),
+                lpips_proxy: rnd(0.26, 0.38),
+                psnr_proxy: rnd(26, 31)
             },
             message: '未连接到后端服务，当前为浏览器本地模拟结果。请用 Flask 启动 web/app.py 后再试。'
         };

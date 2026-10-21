@@ -16,6 +16,8 @@ weights/
 runs/
 outputs/
 test_data/
+uploads/
+api_outputs/
 *.pth
 *.pt
 *.ckpt

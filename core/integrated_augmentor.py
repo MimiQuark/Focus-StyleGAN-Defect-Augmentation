@@ -15,6 +15,12 @@ from typing import List, Optional, Dict, Union
 # Windows + Anaconda 下可能出现 OpenMP 运行时冲突，导致导入 torch/cv2 直接崩溃。
 os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 
+# 直接运行 `python core/integrated_augmentor.py` 时，sys.path[0] 是 core/，
+# 必须在导入项目模块前把仓库根目录加入路径。
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import torch
 import cv2
 import numpy as np
@@ -27,7 +33,7 @@ try:
     IMPORT_SUCCESS = True
 except ImportError as e:
     print(f"导入项目模块失败: {e}")
-    print("请确保项目结构完整，且work目录包含src模块")
+    print("请确保项目结构完整，且 model/ 与 core/ 模块可导入")
     IMPORT_SUCCESS = False
 
 # 导入真实缺陷迁移模块
@@ -461,7 +467,7 @@ def main():
         if args.mode == "retrieval":
             if not args.input or not args.category:
                 print("错误: 检索模式需要 --input 和 --category 参数")
-                return
+                sys.exit(1)
             from core.retrieval_augmentor import RetrievalAugmentor
             aug = RetrievalAugmentor()
             aug.build_index()
@@ -470,12 +476,12 @@ def main():
                 args.category, n_variations=args.variations,
             )
             print(f"检索增广完成: {len(paths)} 张")
-            return
+            sys.exit(0)
 
         if args.mode == "stacking":
             if not args.input or not args.category:
                 print("错误: 堆叠模式需要 --input 和 --category 参数")
-                return
+                sys.exit(1)
             from core.retrieval_augmentor import DefectStackingAugmentor
             aug = DefectStackingAugmentor(category=args.category)
             paths = aug.generate_batch(
@@ -485,7 +491,31 @@ def main():
                 intensity=args.intensity,
             )
             print(f"堆叠增广完成: {len(paths)} 张")
-            return
+            sys.exit(0)
+
+        # info 模式只读取配置，不需要数据集 / checkpoint / 模型
+        if args.mode == "info":
+            if not IMPORT_SUCCESS:
+                raise ImportError("无法导入项目模块，请检查项目结构")
+            config_path = args.config
+            if config_path is None:
+                for candidate in ("core/integrated_config.yaml",
+                                  "integrated_config.yaml",
+                                  "configs/default.yaml"):
+                    if (PROJECT_ROOT / candidate).exists():
+                        config_path = str(PROJECT_ROOT / candidate)
+                        break
+            if config_path is None:
+                raise FileNotFoundError("未找到配置文件，请用 --config 指定")
+            cfg = Config(config_path)
+            device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
+            print("模型信息:")
+            print(f"  device: {device}")
+            print(f"  config_path: {config_path}")
+            print(f"  image_size: {cfg.get('data.image_size', '?')}")
+            print(f"  latent_dim: {cfg.get('model.generator.latent_dim', '?')}")
+            print("  checkpoint_path: (info 模式未加载模型)")
+            sys.exit(0)
 
         # 初始化增广器（GAN模式需要模型）
         augmentor = IntegratedAugmentor(
@@ -498,7 +528,7 @@ def main():
         if args.mode == "single":
             if not args.input:
                 print("错误: 单张图像模式需要--input参数指定图像路径")
-                return
+                sys.exit(1)
 
             augmentor.augment_single_image(
                 image_path=args.input,
@@ -509,7 +539,7 @@ def main():
         elif args.mode == "dataset":
             if not args.input:
                 print("错误: 数据集模式需要--input参数指定目录路径")
-                return
+                sys.exit(1)
 
             augmentor.augment_dataset(
                 input_dir=args.input,
@@ -520,7 +550,7 @@ def main():
         elif args.mode == "batch":
             if not args.input:
                 print("错误: 批量模式需要--input参数指定包含图像路径的文本文件")
-                return
+                sys.exit(1)
 
             # 从文本文件读取图像路径
             if Path(args.input).exists():
@@ -529,7 +559,7 @@ def main():
 
                 if not image_paths:
                     print("错误: 文本文件中没有有效的图像路径")
-                    return
+                    sys.exit(1)
 
                 augmentor.batch_augment(
                     image_paths=image_paths,
@@ -538,15 +568,16 @@ def main():
                 )
             else:
                 print(f"错误: 输入文件不存在: {args.input}")
+                sys.exit(1)
 
         elif args.mode == "real":
             if not args.input:
                 print("错误: 真实缺陷模式需要--input参数指定图像路径")
-                return
+                sys.exit(1)
 
             if not REAL_DEFECT_AVAILABLE:
                 print("错误: 真实缺陷模块不可用")
-                return
+                sys.exit(1)
 
             augmentor.augment_single_image_real(
                 image_path=args.input,
@@ -557,16 +588,13 @@ def main():
                 intensity=args.intensity,
             )
 
-        elif args.mode == "info":
-            info = augmentor.get_model_info()
-            print("模型信息:")
-            for key, value in info.items():
-                print(f"  {key}: {value}")
+        sys.exit(0)
 
     except Exception as e:
         print(f"错误: {e}")
         import traceback
         traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
