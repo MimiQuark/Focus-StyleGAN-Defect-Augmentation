@@ -507,7 +507,8 @@ class AnomalyDetectionEvaluator:
 
         # 归一化积分
         if fpr_limited[-1] > 0:
-            pro_auc = np.trapz(dr_limited, fpr_limited) / integration_limit
+            trapz = getattr(np, "trapezoid", None) or getattr(np, "trapz")
+            pro_auc = trapz(dr_limited, fpr_limited) / integration_limit
         else:
             pro_auc = 0.0
 

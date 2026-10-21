@@ -5,6 +5,8 @@
 包含训练循环、损失函数和Optuna集成
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import time
@@ -12,7 +14,10 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-import optuna
+try:
+    import optuna
+except ImportError:  # tuning is optional; training itself does not need it
+    optuna = None
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -656,6 +661,8 @@ class OptunaOptimizer:
         self.device = device
         self.logger = logger
 
+        if optuna is None:
+            raise ImportError("Optuna 调参需要安装 optuna：pip install optuna")
         # 创建Optuna study
         self.study = optuna.create_study(
             study_name=config.optuna.study_name,

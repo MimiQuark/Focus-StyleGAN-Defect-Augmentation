@@ -34,12 +34,12 @@ def test_pps():
 
         assert 0.0 <= results['pps'] <= 1.0, "PPS应在[0, 1]范围内"
         print("  [OK] PPS计算通过")
-        return True
+        return
     except Exception as e:
         print(f"  [FAIL] PPS测试失败: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        raise
 
 
 def test_visualizer():
@@ -95,12 +95,12 @@ def test_visualizer():
         import shutil
         shutil.rmtree("test_outputs", ignore_errors=True)
         print("  [OK] 可视化测试通过")
-        return True
+        return
     except Exception as e:
         print(f"  [FAIL] 可视化测试失败: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        raise
 
 
 def test_cbam_in_discriminator():
@@ -145,12 +145,12 @@ def test_cbam_in_discriminator():
         fused_no_cbam, _ = ms_disc_no_cbam(x)
         print(f"  禁用CBAM后输出形状: {fused_no_cbam.shape}")
         print("  [OK] CBAM判别器测试通过")
-        return True
+        return
     except Exception as e:
         print(f"  [FAIL] CBAM判别器测试失败: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        raise
 
 
 def test_ablation_configs():
@@ -176,12 +176,12 @@ def test_ablation_configs():
         assert ABLATION_CONFIGS['full_model'].use_dual_branch
 
         print("  [OK] 消融配置测试通过")
-        return True
+        return
     except Exception as e:
         print(f"  [FAIL] 消融配置测试失败: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        raise
 
 
 def test_pro_auc():
@@ -215,12 +215,12 @@ def test_pro_auc():
         print(f"  PRO-AUC: {pro_score:.4f}")
         assert 0.0 <= pro_score <= 1.0, f"PRO-AUC应在[0, 1]范围内，实际: {pro_score}"
         print("  [OK] PRO-AUC计算通过")
-        return True
+        return
     except Exception as e:
         print(f"  [FAIL] PRO-AUC测试失败: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        raise
 
 
 def main():

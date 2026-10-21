@@ -1,6 +1,7 @@
 # Focus-StyleGAN 工业缺陷图像增广系统
 
-[![Syntax CI](https://github.com/MimiJimmy001/Industrial-Defect-Gan-Augmentation/actions/workflows/ci.yml/badge.svg)](https://github.com/MimiJimmy001/Industrial-Defect-Gan-Augmentation/actions/workflows/ci.yml)
+[![CI](https://github.com/MimiQuark/Focus-StyleGAN-Defect-Augmentation/actions/workflows/ci.yml/badge.svg)](https://github.com/MimiQuark/Focus-StyleGAN-Defect-Augmentation/actions/workflows/ci.yml)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?logo=github&logoColor=white)](https://github.com/MimiQuark/Focus-StyleGAN-Defect-Augmentation)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-GAN-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

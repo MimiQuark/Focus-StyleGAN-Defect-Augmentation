@@ -27,10 +27,10 @@ def test_config():
         print(f"✓ 配置加载成功")
         print(f"  图像尺寸: {config.data.image_size}")
         print(f"  批大小: {config.data.batch_size}")
-        return True
+        return
     except Exception as e:
         print(f"✗ 配置加载失败: {e}")
-        return False
+        raise
 
 
 def test_model():
@@ -51,10 +51,10 @@ def test_model():
         print(f"✓ 模型创建成功")
         print(f"  生成图像形状: {outputs['fused_images'].shape}")
         print(f"  判别器输出形状: {outputs['d_real'].shape}")
-        return True
+        return
     except Exception as e:
         print(f"✗ 模型测试失败: {e}")
-        return False
+        raise
 
 
 def test_dataset():
@@ -97,10 +97,10 @@ def test_dataset():
         import shutil
         shutil.rmtree(test_data_dir)
 
-        return True
+        return
     except Exception as e:
         print(f"✗ 数据集测试失败: {e}")
-        return False
+        raise
 
 
 def test_training_components():
@@ -119,10 +119,10 @@ def test_training_components():
 
         print(f"✓ 训练组件测试成功")
         print(f"  感知损失值: {loss.item():.4f}")
-        return True
+        return
     except Exception as e:
         print(f"✗ 训练组件测试失败: {e}")
-        return False
+        raise
 
 
 def test_logger():
@@ -135,10 +135,10 @@ def test_logger():
         logger.error("测试日志错误")
 
         print(f"✓ 日志系统测试成功")
-        return True
+        return
     except Exception as e:
         print(f"✗ 日志系统测试失败: {e}")
-        return False
+        raise
 
 
 def test_augmentation():
@@ -158,10 +158,10 @@ def test_augmentation():
 
         print(f"✓ 增广模块测试成功")
         print(f"  设备: {device}")
-        return True
+        return
     except Exception as e:
         print(f"✗ 增广模块测试失败: {e}")
-        return False
+        raise
 
 
 def main():
